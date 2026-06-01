@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tangi ☕ — a tiny cross-platform keep-awake tool</title>
+<meta name="description" content="tangi is a tiny, fast, cross-platform CLI that keeps your computer awake for as long as you want — with a live countdown you can check, extend, and stop from any terminal.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --border: #30363d;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #ffb454;
+    --accent-2: #6ad28a;
+    --code-bg: #010409;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+  /* hero */
+  header {
+    text-align: center;
+    padding: 80px 20px 56px;
+    background: radial-gradient(ellipse at top, rgba(255,180,84,0.10), transparent 60%);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-size: 64px; line-height: 1; }
+  h1 { font-size: 44px; margin: 14px 0 6px; letter-spacing: -1px; }
+  .tagline { font-size: 19px; color: var(--muted); margin: 0 auto 8px; max-width: 620px; }
+  .badges { margin-top: 18px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .badge {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--bg-soft); border: 1px solid var(--border);
+    color: var(--muted); padding: 4px 11px; border-radius: 999px;
+  }
+  .badge b { color: var(--accent-2); font-weight: 600; }
+  .cta { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; font-weight: 600; font-size: 15px;
+    padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border);
+  }
+  .btn.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); }
+  .btn.primary:hover { text-decoration: none; filter: brightness(1.05); }
+  .btn.ghost { background: var(--bg-soft); color: var(--fg); }
+  .btn.ghost:hover { text-decoration: none; border-color: var(--muted); }
+
+  /* terminal */
+  .term {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    margin: 40px 0; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 14px; background: var(--bg-soft); border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
+  .term-title { margin-left: 8px; color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+  pre {
+    margin: 0; padding: 18px 20px; font-family: var(--mono); font-size: 13.5px;
+    line-height: 1.75; overflow-x: auto; color: var(--fg);
+  }
+  .p { color: var(--accent-2); }      /* prompt $ */
+  .c { color: var(--muted); }         /* comments */
+  .o { color: #79c0ff; }              /* output */
+  .k { color: var(--accent); }        /* highlighted token */
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  h2 { font-size: 27px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 16.5px; }
+  .card h3 .i { margin-right: 8px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  code.inline {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--code-bg); border: 1px solid var(--border);
+    padding: 1.5px 6px; border-radius: 5px; color: var(--accent);
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; }
+  td code { font-family: var(--mono); color: var(--accent); font-size: 13px; }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps li { position: relative; padding: 0 0 18px 44px; }
+  .steps li::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 0; top: 0; width: 28px; height: 28px;
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 13px; color: var(--accent);
+  }
+  .steps li b { color: var(--fg); }
+  .steps li span { color: var(--muted); }
+
+  footer { text-align: center; padding: 40px 20px 60px; color: var(--muted); font-size: 14px; }
+  footer .logo-sm { font-size: 26px; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 34px; }
+    .grid { grid-template-columns: 1fr; }
+    pre { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">☕</div>
+    <h1>tangi</h1>
+    <p class="tagline">A tiny, fast keep-awake tool for macOS &amp; Linux. Keep your computer from sleeping for exactly as long as you want — with a live countdown you can check, extend, and stop from any terminal.</p>
+    <div class="badges">
+      <span class="badge"><b>~36 KB</b> binary</span>
+      <span class="badge">written in <b>C</b></span>
+      <span class="badge"><b>0</b> runtime deps</span>
+      <span class="badge">macOS · Linux</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#install">Install</a>
+      <a class="btn ghost" href="https://github.com/your-org/tangi">View on GitHub →</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">zsh — tangi</span>
+    </div>
+<pre><span class="p">$</span> tangi 1h30m          <span class="c"># stay awake for 90 minutes</span>
+<span class="o">☕ tangi awake — 1h30m0s remaining</span>
+<span class="o">   elapsed 0s</span>
+
+<span class="p">$</span> tangi                <span class="c"># no args = live status</span>
+<span class="o">☕ tangi awake — 1h28m12s remaining</span>
+<span class="o">   elapsed 1m48s</span>
+
+<span class="p">$</span> tangi add 10m        <span class="c"># add more time to the session</span>
+<span class="o">☕ tangi awake — 1h38m12s remaining</span>
+
+<span class="p">$</span> tangi -d 25m         <span class="c"># reset to 25m, keep the screen on too</span>
+<span class="o">☕ tangi awake — 25m0s remaining</span>
+<span class="o">   elapsed 0s · display kept awake</span>
+
+<span class="p">$</span> tangi stop           <span class="c"># release — allow sleep again</span>
+<span class="o">tangi: stopped, sleep allowed</span></pre>
+  </div>
+
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h2>Why tangi</h2>
+    <p class="sub">Small enough to forget it's there, real enough to trust it.</p>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="i">🪶</span>Tiny &amp; efficient</h3>
+        <p>A ~36 KB stripped binary with no runtime dependencies on macOS. The daemon sleeps in <code class="inline">select()</code> — no polling, near-zero CPU and memory.</p>
+      </div>
+      <div class="card">
+        <h3><span class="i">🔌</span>Real OS integration</h3>
+        <p>tangi asks the operating system directly to stay awake — macOS IOKit power assertions and Linux systemd-logind inhibitor locks. Reliable, with no input-faking tricks.</p>
+      </div>
+      <div class="card">
+        <h3><span class="i">⏱️</span>Live, controllable timer</h3>
+        <p>Check what's left, add more time, or stop early — from any terminal, while it keeps running in the background. Set time in <code class="inline">s</code>/<code class="inline">m</code>/<code class="inline">h</code>/<code class="inline">d</code>.</p>
+      </div>
+      <div class="card">
+        <h3><span class="i">🧹</span>Clean by design</h3>
+        <p>When the timer ends or you run <code class="inline">tangi stop</code>, the lock is released, the socket removed, and the daemon exits. Nothing is left running.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Install</h2>
+    <p class="sub">A C compiler and <code class="inline">make</code> are all you need.</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">build</span>
+      </div>
+<pre><span class="p">$</span> git clone https://github.com/your-org/tangi
+<span class="p">$</span> cd tangi
+<span class="p">$</span> make                 <span class="c"># builds ./tangi (size-optimized, stripped)</span>
+<span class="p">$</span> sudo make install    <span class="c"># installs to /usr/local/bin</span></pre>
+    </div>
+    <p style="color:var(--muted); font-size:14.5px;">
+      <b style="color:var(--fg)">macOS:</b> clang + the system SDK (IOKit / CoreFoundation). Nothing else.<br>
+      <b style="color:var(--fg)">Linux:</b> for the clean fd-based inhibitor, install <code class="inline">libsystemd</code> dev headers. Without them, tangi falls back to spawning <code class="inline">systemd-inhibit</code> at runtime.
+    </p>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="wrap">
+    <h2>Usage</h2>
+    <p class="sub">Five commands. That's the whole surface.</p>
+    <table>
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>tangi &lt;duration&gt;</code></td><td>Start (or reset) — stay awake for the given time.</td></tr>
+        <tr><td><code>tangi on</code></td><td>Stay awake indefinitely, until stopped.</td></tr>
+        <tr><td><code>tangi add &lt;duration&gt;</code></td><td>Add more time to the current session.</td></tr>
+        <tr><td><code>tangi status</code></td><td>Show remaining time (also the default with no args).</td></tr>
+        <tr><td><code>tangi stop</code></td><td>Release the lock and allow sleep again.</td></tr>
+      </tbody>
+    </table>
+    <h3 style="margin:28px 0 4px; font-size:16.5px;">Options</h3>
+    <table>
+      <tbody>
+        <tr><td><code>-d</code>, <code>--display</code></td><td>Also keep the display awake (works on start <em>and</em> reset).</td></tr>
+        <tr><td><code>-h</code>, <code>--help</code></td><td>Show help.</td></tr>
+        <tr><td><code>-v</code>, <code>--version</code></td><td>Show version and the active backend.</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted); font-size:14.5px; margin-top:20px;">
+      <b style="color:var(--fg)">Durations</b> combine <code class="inline">d</code>/<code class="inline">h</code>/<code class="inline">m</code>/<code class="inline">s</code>: <code class="inline">45s</code>, <code class="inline">30m</code>, <code class="inline">2h</code>, <code class="inline">1h30m</code>, <code class="inline">1d12h</code>. A bare number means seconds (<code class="inline">90</code> = <code class="inline">90s</code>).
+    </p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">A pocket-sized daemon plus a thin client, talking over a Unix socket.</p>
+    <ol class="steps">
+      <li><b>You run <code class="inline">tangi 30m</code>.</b> <span>It forks a small detached daemon and returns immediately.</span></li>
+      <li><b>The daemon acquires an OS keep-awake lock</b> <span>and listens on a per-user Unix socket (<code class="inline">$XDG_RUNTIME_DIR/tangi-&lt;uid&gt;.sock</code>).</span></li>
+      <li><b><code class="inline">status</code>, <code class="inline">add</code>, and <code class="inline">stop</code> are thin clients</b> <span>that send one line to that socket and print the reply.</span></li>
+      <li><b>When the timer ends — or you run <code class="inline">tangi stop</code></b> <span>— the lock is released, the socket removed, and the daemon exits. The machine sleeps normally again.</span></li>
+    </ol>
+    <table style="margin-top:8px;">
+      <thead><tr><th>Platform</th><th>Backend</th><th>What it prevents</th></tr></thead>
+      <tbody>
+        <tr><td>macOS</td><td><code>IOKit IOPMAssertion</code></td><td>System idle sleep (+ display sleep with <code>-d</code>).</td></tr>
+        <tr><td>Linux</td><td><code>logind Inhibit</code> lock</td><td>Idle + sleep (+ lid switch with <code>-d</code>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="logo-sm">☕</div>
+  <p>tangi — stay awake, on your terms.<br>
+  <a href="https://github.com/your-org/tangi">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>

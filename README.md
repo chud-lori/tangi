@@ -1,14 +1,15 @@
 # tangi ☕
 
-A tiny, fast, cross-platform "keep awake" tool — like macOS `caffeinate`, but
-with a live countdown you can query and extend from any terminal (like
-Amphetamine, CLI-only). Works on **macOS** and **Linux**.
+A tiny, fast, cross-platform tool that keeps your computer awake for exactly as
+long as you want — with a live countdown you can check, extend, and stop from
+any terminal. Works on **macOS** and **Linux**.
 
 - **Small:** ~36 KB stripped binary, zero runtime dependencies on macOS.
 - **Efficient:** a single tiny daemon that sleeps in `select()` — no polling,
   near-zero CPU and memory.
-- **Real OS integration:** macOS IOKit power assertions; Linux systemd-logind
-  inhibitor locks (no fake mouse jiggling).
+- **Real OS integration:** tangi asks the operating system directly to stay
+  awake — macOS IOKit power assertions and Linux systemd-logind inhibitor
+  locks. Reliable, with no input-faking tricks.
 
 ## Build
 
