@@ -1,15 +1,19 @@
 # tangi ☕
 
-A tiny, fast, cross-platform tool that keeps your computer awake for exactly as
-long as you want — with a live countdown you can check, extend, and stop from
-any terminal. Works on **macOS** and **Linux**.
+A tiny, fast, cross-platform tool that keeps your computer awake and your screen
+on for exactly as long as you want — with a live countdown you can check,
+extend, and stop from any terminal. Works on **macOS** and **Linux**.
 
-- **Small:** ~36 KB stripped binary, zero runtime dependencies on macOS.
-- **Efficient:** a single tiny daemon that sleeps in `select()` — no polling,
-  near-zero CPU and memory.
+By default tangi behaves like a CLI Amphetamine: it keeps the **system awake**,
+keeps the **display on** (no screensaver, no lock), and keeps you showing as
+**active in chat apps** like Slack — no flags required. Add `-s` for a quiet
+"just don't sleep in the background" mode.
+
+- **Small:** ~40 KB stripped binary, zero runtime dependencies on macOS.
+- **Efficient:** a single tiny daemon that sleeps in `select()` — no busy
+  polling, near-zero CPU and memory.
 - **Real OS integration:** tangi asks the operating system directly to stay
-  awake — macOS IOKit power assertions and Linux systemd-logind inhibitor
-  locks. Reliable, with no input-faking tricks.
+  awake — macOS IOKit power assertions and Linux systemd-logind inhibitor locks.
 
 ## Build
 
@@ -36,8 +40,10 @@ tangi stop            # release and allow sleep again
 ```
 
 Options:
-- `-d`, `--display` — also keep the display awake (works on start *and* reset).
 - `-l`, `--lid` — also stay awake when the laptop lid is closed.
+- `-s`, `--system-only` — quiet mode: only stop the machine sleeping. The
+  display may sleep and chat-app presence is left alone (good for background
+  jobs).
 - `-h`, `--help` — help.
 - `-v`, `--version` — version + active backend.
 
@@ -47,13 +53,23 @@ A bare number means seconds (`90` == `90s`).
 ### Examples
 
 ```sh
-tangi 1h30m       # stay awake for 90 minutes
+tangi 1h30m       # awake + screen on + online for 90 minutes
+tangi on          # ...indefinitely, until you stop it
 tangi             # ☕ tangi awake — 1h28m12s remaining
 tangi add 10m     # extend by 10 minutes
-tangi -d 25m      # 25 minutes, screen stays on too
 tangi lid 1h      # keep working for an hour with the lid closed
+tangi -s 2h       # background: just don't sleep for 2 hours
 tangi stop        # done
 ```
+
+## Staying "online" (default)
+
+In its default mode tangi keeps the display on and, every ~50 seconds, tells the
+OS the user is active — so chat apps that track idle time (Slack, Teams) keep
+showing you as active. This does **not** move the cursor or type anything: on
+macOS it reuses Apple's `IOPMAssertionDeclareUserActivity` and posts a
+zero-distance mouse event at the current pointer position to reset the system
+idle timer. Use `-s` if you'd rather tangi leave presence and the display alone.
 
 ## Lid mode
 
@@ -79,7 +95,9 @@ keep-awake lock and listens on a per-user Unix socket
 timer expires (or you run `tangi stop`), the daemon releases the lock and exits,
 so the machine can sleep normally again. Nothing is left running.
 
-| Platform | Backend | What it prevents |
-|----------|---------|------------------|
-| macOS    | IOKit `IOPMAssertion` (+ `pmset disablesleep` for lid mode) | idle sleep (+ display with `-d`, + lid-close with `-l`) |
-| Linux    | logind `Inhibit` lock | idle + sleep (+ lid-close with `-l`) |
+| Platform | Backend | Default keeps awake | Extras |
+|----------|---------|---------------------|--------|
+| macOS    | IOKit `IOPMAssertion` + `DeclareUserActivity` | system, display, presence | `pmset disablesleep` for lid mode (`-l`) |
+| Linux    | logind `Inhibit` lock | system, idle/presence | `handle-lid-switch` for lid mode (`-l`) |
+
+(`-s` drops back to system-sleep only.)

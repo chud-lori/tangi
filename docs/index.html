@@ -129,7 +129,7 @@
   <div class="wrap">
     <div class="logo">☕</div>
     <h1>tangi</h1>
-    <p class="tagline">A tiny, fast keep-awake tool for macOS &amp; Linux. Keep your computer from sleeping for exactly as long as you want — with a live countdown you can check, extend, and stop from any terminal.</p>
+    <p class="tagline">A tiny, fast keep-awake tool for macOS &amp; Linux. Keeps your computer awake, your screen on, and you showing as active in Slack — for exactly as long as you want, with a live countdown you can check, extend, and stop from any terminal.</p>
     <div class="badges">
       <span class="badge"><b>~36 KB</b> binary</span>
       <span class="badge">written in <b>C</b></span>
@@ -150,24 +150,24 @@
       <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
       <span class="term-title">zsh — tangi</span>
     </div>
-<pre><span class="p">$</span> tangi 1h30m          <span class="c"># stay awake for 90 minutes</span>
+<pre><span class="p">$</span> tangi 1h30m          <span class="c"># awake + screen on + online, 90 minutes</span>
 <span class="o">☕ tangi awake — 1h30m0s remaining</span>
-<span class="o">   elapsed 0s</span>
+<span class="o">   elapsed 0s · display on · staying online</span>
 
 <span class="p">$</span> tangi                <span class="c"># no args = live status</span>
 <span class="o">☕ tangi awake — 1h28m12s remaining</span>
-<span class="o">   elapsed 1m48s</span>
+<span class="o">   elapsed 1m48s · display on · staying online</span>
 
 <span class="p">$</span> tangi add 10m        <span class="c"># add more time to the session</span>
 <span class="o">☕ tangi awake — 1h38m12s remaining</span>
 
-<span class="p">$</span> tangi -d 25m         <span class="c"># reset to 25m, keep the screen on too</span>
-<span class="o">☕ tangi awake — 25m0s remaining</span>
-<span class="o">   elapsed 0s · display kept awake</span>
-
 <span class="p">$</span> tangi lid 1h         <span class="c"># keep working with the lid closed (macOS asks for admin)</span>
 <span class="o">☕ tangi awake — 1h0m0s remaining</span>
-<span class="o">   elapsed 0s · lid-close sleep off</span>
+<span class="o">   elapsed 0s · display on · staying online · lid-close sleep off</span>
+
+<span class="p">$</span> tangi -s 2h          <span class="c"># quiet background mode: just don't sleep</span>
+<span class="o">☕ tangi awake — 2h0m0s remaining</span>
+<span class="o">   elapsed 0s</span>
 
 <span class="p">$</span> tangi stop           <span class="c"># release — allow sleep again</span>
 <span class="o">tangi: stopped, sleep allowed</span></pre>
@@ -185,8 +185,8 @@
         <p>A ~36 KB stripped binary with no runtime dependencies on macOS. The daemon sleeps in <code class="inline">select()</code> — no polling, near-zero CPU and memory.</p>
       </div>
       <div class="card">
-        <h3><span class="i">🔌</span>Real OS integration</h3>
-        <p>tangi asks the operating system directly to stay awake — macOS IOKit power assertions and Linux systemd-logind inhibitor locks. Reliable, with no input-faking tricks.</p>
+        <h3><span class="i">🟢</span>Stays online by default</h3>
+        <p>Keeps the system awake, the display on, and — every ~50s — tells the OS you're active so Slack &amp; Teams keep showing you online. No visible cursor moves or keystrokes. Use <code class="inline">-s</code> to opt out.</p>
       </div>
       <div class="card">
         <h3><span class="i">⏱️</span>Live, controllable timer</h3>
@@ -239,8 +239,8 @@
     <h3 style="margin:28px 0 4px; font-size:16.5px;">Options</h3>
     <table>
       <tbody>
-        <tr><td><code>-d</code>, <code>--display</code></td><td>Also keep the display awake (works on start <em>and</em> reset).</td></tr>
         <tr><td><code>-l</code>, <code>--lid</code></td><td>Also stay awake when the laptop lid is closed.</td></tr>
+        <tr><td><code>-s</code>, <code>--system-only</code></td><td>Quiet mode: only stop the machine sleeping — let the display sleep and leave chat presence alone.</td></tr>
         <tr><td><code>-h</code>, <code>--help</code></td><td>Show help.</td></tr>
         <tr><td><code>-v</code>, <code>--version</code></td><td>Show version and the active backend.</td></tr>
       </tbody>
@@ -264,8 +264,8 @@
     <table style="margin-top:8px;">
       <thead><tr><th>Platform</th><th>Backend</th><th>What it prevents</th></tr></thead>
       <tbody>
-        <tr><td>macOS</td><td><code>IOKit IOPMAssertion</code> <span style="color:var(--muted)">(+ <code>pmset</code> for lid mode)</span></td><td>Idle sleep (+ display with <code>-d</code>, + lid-close with <code>-l</code>).</td></tr>
-        <tr><td>Linux</td><td><code>logind Inhibit</code> lock</td><td>Idle + sleep (+ lid-close with <code>-l</code>).</td></tr>
+        <tr><td>macOS</td><td><code>IOKit IOPMAssertion</code> + <code>DeclareUserActivity</code> <span style="color:var(--muted)">(+ <code>pmset</code> for lid)</span></td><td>System, display &amp; presence by default (+ lid-close with <code>-l</code>).</td></tr>
+        <tr><td>Linux</td><td><code>logind Inhibit</code> lock</td><td>System + idle/presence by default (+ lid-close with <code>-l</code>).</td></tr>
       </tbody>
     </table>
   </div>

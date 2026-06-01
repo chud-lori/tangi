@@ -22,6 +22,14 @@ platform_inhibitor *platform_inhibit_start(int display, int lid, char *errbuf, s
 /* Release the lock and free the handle. Safe to call with NULL. */
 void platform_inhibit_stop(platform_inhibitor *h);
 
+/*
+ * Tell the OS the user is active right now, resetting the idle timer that
+ * chat apps (Slack, Teams, ...) read to decide "active vs away". Called
+ * periodically by the daemon in the default (Amphetamine-style) mode. It does
+ * not move the cursor or type anything visible. No-op where not applicable.
+ */
+void platform_user_active(void);
+
 /* Short name of the backend in use, e.g. "IOKit" or "logind". */
 const char *platform_backend(void);
 

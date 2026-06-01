@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <CoreFoundation/CoreFoundation.h>
+#include <CoreGraphics/CoreGraphics.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 
 struct platform_inhibitor {
@@ -57,6 +58,30 @@ void platform_inhibit_stop(platform_inhibitor *h)
 		IOPMAssertionRelease(h->disp);
 	IOPMAssertionRelease(h->sys);
 	free(h);
+}
+
+void platform_user_active(void)
+{
+	/* PM-level: declare the user present (resets display/idle timers).
+	 * Reuse one assertion id across calls so nothing leaks. */
+	static IOPMAssertionID activity = 0; /* kIOPMNullAssertionID */
+	IOPMAssertionDeclareUserActivity(CFSTR("tangi: user active"),
+	                                 kIOPMUserActiveLocal, &activity);
+
+	/* HID-level: post an invisible mouse-moved event at the *current* cursor
+	 * position. Zero displacement, so the pointer doesn't move, but it resets
+	 * the system idle timer that Slack/Teams use for presence. */
+	CGEventRef probe = CGEventCreate(NULL);
+	if (probe != NULL) {
+		CGPoint p = CGEventGetLocation(probe);
+		CFRelease(probe);
+		CGEventRef move = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved, p,
+		                                          kCGMouseButtonLeft);
+		if (move != NULL) {
+			CGEventPost(kCGHIDEventTap, move);
+			CFRelease(move);
+		}
+	}
 }
 
 const char *platform_backend(void)

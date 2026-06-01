@@ -12,10 +12,12 @@
  *   display       also keep the display awake
  *   lid           also inhibit lid-close sleep where the lock layer can
  *                 (Linux); on macOS this is handled by a separate lid guard
+ *   active        periodically declare user activity so chat-app presence
+ *                 stays "active" (the default, Amphetamine-style behavior)
  *
  * Never returns; calls _exit() when the timer ends or STOP is received.
  */
 void daemon_run(int listen_fd, int handshake_fd, long initial_secs,
-                int indefinite, int display, int lid);
+                int indefinite, int display, int lid, int active);
 
 #endif /* TANGI_DAEMON_H */

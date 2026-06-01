@@ -177,3 +177,9 @@ const char *platform_backend(void)
 }
 
 #endif /* HAVE_SYSTEMD */
+
+void platform_user_active(void)
+{
+	/* The logind idle inhibitor already marks the session non-idle, which is
+	 * what presence on Linux keys off, so there is nothing extra to do here. */
+}

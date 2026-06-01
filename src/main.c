@@ -186,19 +186,23 @@ static int ensure_lidguard(void)
 static void usage(FILE *out)
 {
 	fprintf(out,
-"tangi — keep your computer awake for as long as you want\n"
+"tangi — keep your computer awake and your screen on\n"
+"\n"
+"By default tangi keeps the system awake, keeps the display on (no screensaver\n"
+"or lock), and keeps you showing as active in chat apps like Slack.\n"
 "\n"
 "Usage:\n"
-"  tangi <duration>     start/reset: stay awake for the given time\n"
+"  tangi <duration>     stay awake for the given time (start or reset)\n"
 "  tangi on             stay awake indefinitely (until stopped)\n"
 "  tangi add <duration> add more time to the current session\n"
-"  tangi lid <duration> stay awake even with the lid closed\n"
+"  tangi lid <duration> also stay awake with the lid closed\n"
 "  tangi status         show remaining time (default with no args)\n"
 "  tangi stop           release and allow sleep again\n"
 "\n"
 "Options:\n"
-"  -d, --display        also keep the display awake\n"
 "  -l, --lid            also stay awake when the lid is closed\n"
+"  -s, --system-only    only stop sleep; let the display sleep and don't\n"
+"                       touch chat-app presence (for background tasks)\n"
 "  -h, --help           show this help\n"
 "  -v, --version        show version\n"
 "\n"
@@ -210,18 +214,19 @@ static void usage(FILE *out)
 "It is turned off automatically when the session stops.\n"
 "\n"
 "Examples:\n"
-"  tangi 1h30m          stay awake for 90 minutes\n"
+"  tangi 1h30m          stay awake and online for 90 minutes\n"
+"  tangi on             stay awake and online until you stop it\n"
 "  tangi add 10m        extend the current session by 10 minutes\n"
-"  tangi -d 25m         stay awake 25 min and keep the screen on\n"
-"  tangi lid 1h         keep working for an hour with the lid closed\n");
+"  tangi lid 1h         keep working for an hour with the lid closed\n"
+"  tangi -s 2h          background mode: just don't sleep for 2 hours\n");
 }
 
-/* Parse an "R <indef> <remaining> <elapsed> <display> <lid>" line and print it. */
+/* Parse an "R <indef> <remaining> <elapsed> <display> <lid> <active>" line. */
 static void print_status_line(const char *line)
 {
-	int indef = 0, disp = 0, lid = 0;
+	int indef = 0, disp = 0, lid = 0, active = 0;
 	long rem = 0, el = 0;
-	if (sscanf(line, "R %d %ld %ld %d %d", &indef, &rem, &el, &disp, &lid) < 4) {
+	if (sscanf(line, "R %d %ld %ld %d %d %d", &indef, &rem, &el, &disp, &lid, &active) < 4) {
 		printf("tangi: unexpected reply from daemon\n");
 		return;
 	}
@@ -236,11 +241,13 @@ static void print_status_line(const char *line)
 	char ebuf[32];
 	duration_format(el, ebuf, sizeof(ebuf));
 
-	/* Build the trailing detail tag: "· display kept awake · lid closed ok". */
-	char tag[80];
+	/* Build the trailing detail tag. */
+	char tag[120];
 	tag[0] = '\0';
 	if (disp)
-		strncat(tag, " \xC2\xB7 display kept awake", sizeof(tag) - strlen(tag) - 1);
+		strncat(tag, " \xC2\xB7 display on", sizeof(tag) - strlen(tag) - 1);
+	if (active)
+		strncat(tag, " \xC2\xB7 staying online", sizeof(tag) - strlen(tag) - 1);
 	if (lid)
 		strncat(tag, " \xC2\xB7 lid-close sleep off", sizeof(tag) - strlen(tag) - 1);
 
@@ -317,7 +324,8 @@ static int cmd_stop(void)
 }
 
 /* Fork+detach a daemon that owns the given listening socket. */
-static int spawn_daemon(int listen_fd, long secs, int indefinite, int display, int lid)
+static int spawn_daemon(int listen_fd, long secs, int indefinite,
+                        int display, int lid, int active)
 {
 	int p[2];
 	if (pipe(p) != 0) {
@@ -340,7 +348,7 @@ static int spawn_daemon(int listen_fd, long secs, int indefinite, int display, i
 		if (grandchild == 0) {
 			/* Daemon: owns listen_fd and the write end of the pipe. */
 			close(p[0]);
-			daemon_run(listen_fd, p[1], secs, indefinite, display, lid);
+			daemon_run(listen_fd, p[1], secs, indefinite, display, lid, active);
 			_exit(0); /* not reached */
 		}
 		_exit(0);
@@ -384,16 +392,16 @@ static void arrange_lid(int lid)
 #endif
 }
 
-static int start(long secs, int indefinite, int display, int lid)
+static int start(long secs, int indefinite, int display, int lid, int active)
 {
 	/* If a daemon is already running, just reset/extend it in place. */
 	int fd = ipc_connect();
 	if (fd >= 0) {
 		char line[64];
 		if (indefinite)
-			snprintf(line, sizeof(line), "INDEF %d %d", display, lid);
+			snprintf(line, sizeof(line), "INDEF %d %d %d", display, lid, active);
 		else
-			snprintf(line, sizeof(line), "SET %ld %d %d", secs, display, lid);
+			snprintf(line, sizeof(line), "SET %ld %d %d %d", secs, display, lid, active);
 		close(fd);
 		arrange_lid(lid);
 		return talk_and_print(line, 1);
@@ -432,7 +440,7 @@ static int start(long secs, int indefinite, int display, int lid)
 		return 1;
 	}
 
-	if (spawn_daemon(lf, secs, indefinite, display, lid) != 0) {
+	if (spawn_daemon(lf, secs, indefinite, display, lid, active) != 0) {
 		unlink(path);
 		return 1;
 	}
@@ -452,7 +460,9 @@ int main(int argc, char **argv)
 		return lidguard_main(argv[2], argv[3]);
 #endif
 
-	int display = 0;
+	/* Default is Amphetamine-style: display on + stay online. */
+	int display = 1;
+	int active = 1;
 	int lid = 0;
 	const char *pos[8];
 	int npos = 0;
@@ -467,21 +477,26 @@ int main(int argc, char **argv)
 			printf("tangi %s (%s)\n", TANGI_VERSION, platform_backend());
 			return 0;
 		}
-		if (strcmp(a, "-d") == 0 || strcmp(a, "--display") == 0) {
-			display = 1;
-			continue;
-		}
 		if (strcmp(a, "-l") == 0 || strcmp(a, "--lid") == 0) {
 			lid = 1;
 			continue;
 		}
+		if (strcmp(a, "-s") == 0 || strcmp(a, "--system-only") == 0) {
+			display = 0;
+			active = 0;
+			continue;
+		}
+		/* -d/--display kept the screen on; that's now the default, so accept
+		 * it silently for compatibility. */
+		if (strcmp(a, "-d") == 0 || strcmp(a, "--display") == 0)
+			continue;
 		if (npos < (int)(sizeof(pos) / sizeof(pos[0])))
 			pos[npos++] = a;
 	}
 
 	if (npos == 0) {
-		if (lid || display) {
-			fprintf(stderr, "tangi: -d/-l need a duration, e.g. tangi -l 1h\n");
+		if (lid) {
+			fprintf(stderr, "tangi: -l needs a duration, e.g. tangi -l 1h\n");
 			return 2;
 		}
 		return cmd_status();
@@ -494,7 +509,7 @@ int main(int argc, char **argv)
 	if (strcmp(cmd, "stop") == 0 || strcmp(cmd, "off") == 0)
 		return cmd_stop();
 	if (strcmp(cmd, "on") == 0 || strcmp(cmd, "forever") == 0)
-		return start(0, 1, display, lid);
+		return start(0, 1, display, lid, active);
 
 	if (strcmp(cmd, "add") == 0 || strcmp(cmd, "extend") == 0 || strcmp(cmd, "more") == 0) {
 		if (npos < 2) {
@@ -516,13 +531,13 @@ int main(int argc, char **argv)
 			return 2;
 		}
 		if (strcmp(pos[1], "on") == 0 || strcmp(pos[1], "forever") == 0)
-			return start(0, 1, display, 1);
+			return start(0, 1, display, 1, active);
 		long secs;
 		if (duration_parse(pos[1], &secs) != 0 || secs <= 0) {
 			fprintf(stderr, "tangi: invalid duration '%s'\n", pos[1]);
 			return 2;
 		}
-		return start(secs, 0, display, 1);
+		return start(secs, 0, display, 1, active);
 	}
 
 	/* Otherwise treat the first positional as a start duration. */
@@ -532,5 +547,5 @@ int main(int argc, char **argv)
 		usage(stderr);
 		return 2;
 	}
-	return start(secs, 0, display, lid);
+	return start(secs, 0, display, lid, active);
 }

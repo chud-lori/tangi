@@ -20,7 +20,7 @@ UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Darwin)
   SRC     += src/platform_mac.c
-  LDFLAGS += -framework IOKit -framework CoreFoundation
+  LDFLAGS += -framework IOKit -framework CoreFoundation -framework CoreGraphics
 else
   SRC     += src/platform_linux.c
   # Use libsystemd (sd-bus) when available for a clean fd-based inhibitor;

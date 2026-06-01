@@ -9,13 +9,13 @@
  *   client -> daemon
  *     STATUS
  *     ADD <seconds>
- *     SET <seconds> [display] [lid]   (reset the timer to <seconds> from now)
- *     INDEF [display] [lid]           (run until explicitly stopped)
- *     LID <0|1>                       (set lid-mode intent without resetting)
+ *     SET <seconds> [display] [lid] [active]  (reset the timer to <seconds>)
+ *     INDEF [display] [lid] [active]          (run until explicitly stopped)
+ *     LID <0|1>                               (set lid intent, no timer reset)
  *     STOP
  *
  *   daemon -> client
- *     R <indefinite> <remaining> <elapsed> <display> <lid>
+ *     R <indefinite> <remaining> <elapsed> <display> <lid> <active>
  *         indefinite: 0/1, remaining/elapsed: seconds (remaining=-1 if indefinite)
  *     BYE                    (acknowledges STOP; daemon then exits)
  *     ERR <message>
