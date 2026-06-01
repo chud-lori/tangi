@@ -18,21 +18,23 @@ struct state {
 	time_t deadline;
 	int indefinite;
 	int display;
+	int lid;
 	platform_inhibitor *inh;
 };
 
-/* Re-acquire the keep-awake lock if the display preference changed. */
-static void apply_display(struct state *st, int want_display)
+/* Re-acquire the keep-awake lock if the display or lid preference changed. */
+static void apply_locks(struct state *st, int want_display, int want_lid)
 {
-	if (want_display == st->display)
+	if (want_display == st->display && want_lid == st->lid)
 		return;
 	char err[160];
-	platform_inhibitor *fresh = platform_inhibit_start(want_display, err, sizeof(err));
+	platform_inhibitor *fresh = platform_inhibit_start(want_display, want_lid, err, sizeof(err));
 	if (fresh == NULL)
 		return; /* keep the existing lock on failure */
 	platform_inhibit_stop(st->inh);
 	st->inh = fresh;
 	st->display = want_display;
+	st->lid = want_lid;
 }
 
 static volatile sig_atomic_t got_signal = 0;
@@ -55,11 +57,12 @@ static void send_status(int fd, const struct state *st)
 {
 	time_t now = time(NULL);
 	char line[128];
-	snprintf(line, sizeof(line), "R %d %ld %ld %d",
+	snprintf(line, sizeof(line), "R %d %ld %ld %d %d",
 	         st->indefinite ? 1 : 0,
 	         remaining_secs(st, now),
 	         (long)(now - st->started),
-	         st->display ? 1 : 0);
+	         st->display ? 1 : 0,
+	         st->lid ? 1 : 0);
 	ipc_send_line(fd, line);
 }
 
@@ -80,20 +83,27 @@ static int handle_command(int conn_fd, struct state *st)
 	} else if (strncmp(line, "SET ", 4) == 0) {
 		long secs = 0;
 		int want_disp = st->display;
-		sscanf(line + 4, "%ld %d", &secs, &want_disp);
+		int want_lid = st->lid;
+		sscanf(line + 4, "%ld %d %d", &secs, &want_disp, &want_lid);
 		if (secs > 0) {
 			st->indefinite = 0;
 			st->started = time(NULL);
 			st->deadline = st->started + secs;
 		}
-		apply_display(st, want_disp);
+		apply_locks(st, want_disp, want_lid);
 		send_status(conn_fd, st);
 	} else if (strncmp(line, "INDEF", 5) == 0) {
 		int want_disp = st->display;
-		sscanf(line + 5, "%d", &want_disp);
+		int want_lid = st->lid;
+		sscanf(line + 5, "%d %d", &want_disp, &want_lid);
 		st->indefinite = 1;
 		st->started = time(NULL);
-		apply_display(st, want_disp);
+		apply_locks(st, want_disp, want_lid);
+		send_status(conn_fd, st);
+	} else if (strncmp(line, "LID ", 4) == 0) {
+		int want_lid = st->lid;
+		sscanf(line + 4, "%d", &want_lid);
+		apply_locks(st, st->display, want_lid);
 		send_status(conn_fd, st);
 	} else if (strcmp(line, "STOP") == 0) {
 		ipc_send_line(conn_fd, "BYE");
@@ -117,12 +127,12 @@ static void detach_stdio(void)
 }
 
 void daemon_run(int listen_fd, int handshake_fd, long initial_secs,
-                int indefinite, int display)
+                int indefinite, int display, int lid)
 {
 	char errbuf[160];
 	errbuf[0] = '\0';
 
-	platform_inhibitor *inh = platform_inhibit_start(display, errbuf, sizeof(errbuf));
+	platform_inhibitor *inh = platform_inhibit_start(display, lid, errbuf, sizeof(errbuf));
 	if (inh == NULL) {
 		char msg[200];
 		snprintf(msg, sizeof(msg), "E%s\n",
@@ -146,6 +156,7 @@ void daemon_run(int listen_fd, int handshake_fd, long initial_secs,
 	st.started = time(NULL);
 	st.indefinite = indefinite;
 	st.display = display;
+	st.lid = lid;
 	st.deadline = indefinite ? 0 : st.started + initial_secs;
 	st.inh = inh;
 

@@ -30,12 +30,14 @@ Requirements:
 tangi <duration>      # start (or reset) — stay awake for the given time
 tangi on              # stay awake indefinitely, until stopped
 tangi add <duration>  # add more time to the current session
+tangi lid <duration>  # stay awake even with the lid closed
 tangi status          # show remaining time (also the default with no args)
 tangi stop            # release and allow sleep again
 ```
 
 Options:
 - `-d`, `--display` — also keep the display awake (works on start *and* reset).
+- `-l`, `--lid` — also stay awake when the laptop lid is closed.
 - `-h`, `--help` — help.
 - `-v`, `--version` — version + active backend.
 
@@ -49,8 +51,24 @@ tangi 1h30m       # stay awake for 90 minutes
 tangi             # ☕ tangi awake — 1h28m12s remaining
 tangi add 10m     # extend by 10 minutes
 tangi -d 25m      # 25 minutes, screen stays on too
+tangi lid 1h      # keep working for an hour with the lid closed
 tangi stop        # done
 ```
+
+## Lid mode
+
+By default a closed lid will still put the machine to sleep — the normal
+keep-awake lock only blocks *idle* sleep, not the explicit "lid closed" signal.
+`tangi lid <duration>` (or `-l`) keeps the session running with the lid shut.
+
+- **macOS:** there is no power-assertion for this, so tangi globally disables
+  lid-close sleep via `pmset disablesleep`. That needs admin — you'll be asked
+  for your password once, when lid mode starts. A small root "lid guard" then
+  watches the session and **re-enables sleep automatically** as soon as the
+  timer ends, you run `tangi stop`, or you reset without `-l`. Note: running
+  with the lid closed and no external airflow can let the machine run warm.
+- **Linux:** no admin needed — tangi simply asks logind for a
+  `handle-lid-switch` inhibitor alongside the idle/sleep one.
 
 ## How it works
 
@@ -63,5 +81,5 @@ so the machine can sleep normally again. Nothing is left running.
 
 | Platform | Backend | What it prevents |
 |----------|---------|------------------|
-| macOS    | IOKit `IOPMAssertion` | system idle sleep (+ display sleep with `-d`) |
-| Linux    | logind `Inhibit` lock | idle + sleep (+ lid switch with `-d`) |
+| macOS    | IOKit `IOPMAssertion` (+ `pmset disablesleep` for lid mode) | idle sleep (+ display with `-d`, + lid-close with `-l`) |
+| Linux    | logind `Inhibit` lock | idle + sleep (+ lid-close with `-l`) |

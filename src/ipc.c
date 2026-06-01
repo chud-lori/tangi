@@ -26,12 +26,20 @@ int ipc_socket_path(char *buf, size_t n)
 	return 0;
 }
 
-int ipc_connect(void)
+int ipc_lidfile_path(char *buf, size_t n)
 {
-	char path[256];
-	if (ipc_socket_path(path, sizeof(path)) != 0)
-		return -1;
+	const char *dir = getenv("XDG_RUNTIME_DIR");
+	if (dir == NULL || dir[0] == '\0')
+		dir = "/tmp";
 
+	int len = snprintf(buf, n, "%s/tangi-%u.lid", dir, (unsigned)getuid());
+	if (len < 0 || (size_t)len >= n)
+		return -1;
+	return 0;
+}
+
+int ipc_connect_path(const char *path)
+{
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0)
 		return -1;
@@ -46,6 +54,14 @@ int ipc_connect(void)
 		return -1;
 	}
 	return fd;
+}
+
+int ipc_connect(void)
+{
+	char path[256];
+	if (ipc_socket_path(path, sizeof(path)) != 0)
+		return -1;
+	return ipc_connect_path(path);
 }
 
 int ipc_send_line(int fd, const char *line)

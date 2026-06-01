@@ -25,9 +25,10 @@ struct platform_inhibitor {
 	int fd; /* the inhibitor lock fd; closing it releases the lock */
 };
 
-platform_inhibitor *platform_inhibit_start(int display, char *errbuf, size_t errlen)
+platform_inhibitor *platform_inhibit_start(int display, int lid, char *errbuf, size_t errlen)
 {
-	const char *what = display ? "idle:sleep:handle-lid-switch" : "idle:sleep";
+	(void)display; /* logind has no display-only inhibitor; idle covers it */
+	const char *what = lid ? "idle:sleep:handle-lid-switch" : "idle:sleep";
 
 	struct platform_inhibitor *h = calloc(1, sizeof(*h));
 	if (h == NULL) {
@@ -113,9 +114,10 @@ struct platform_inhibitor {
 	pid_t pid;
 };
 
-platform_inhibitor *platform_inhibit_start(int display, char *errbuf, size_t errlen)
+platform_inhibitor *platform_inhibit_start(int display, int lid, char *errbuf, size_t errlen)
 {
-	const char *what = display ? "idle:sleep:handle-lid-switch" : "idle:sleep";
+	(void)display;
+	const char *what = lid ? "idle:sleep:handle-lid-switch" : "idle:sleep";
 
 	struct platform_inhibitor *h = calloc(1, sizeof(*h));
 	if (h == NULL) {

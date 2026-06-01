@@ -165,6 +165,10 @@
 <span class="o">☕ tangi awake — 25m0s remaining</span>
 <span class="o">   elapsed 0s · display kept awake</span>
 
+<span class="p">$</span> tangi lid 1h         <span class="c"># keep working with the lid closed (macOS asks for admin)</span>
+<span class="o">☕ tangi awake — 1h0m0s remaining</span>
+<span class="o">   elapsed 0s · lid-close sleep off</span>
+
 <span class="p">$</span> tangi stop           <span class="c"># release — allow sleep again</span>
 <span class="o">tangi: stopped, sleep allowed</span></pre>
   </div>
@@ -227,6 +231,7 @@
         <tr><td><code>tangi &lt;duration&gt;</code></td><td>Start (or reset) — stay awake for the given time.</td></tr>
         <tr><td><code>tangi on</code></td><td>Stay awake indefinitely, until stopped.</td></tr>
         <tr><td><code>tangi add &lt;duration&gt;</code></td><td>Add more time to the current session.</td></tr>
+        <tr><td><code>tangi lid &lt;duration&gt;</code></td><td>Stay awake even with the lid closed.</td></tr>
         <tr><td><code>tangi status</code></td><td>Show remaining time (also the default with no args).</td></tr>
         <tr><td><code>tangi stop</code></td><td>Release the lock and allow sleep again.</td></tr>
       </tbody>
@@ -235,6 +240,7 @@
     <table>
       <tbody>
         <tr><td><code>-d</code>, <code>--display</code></td><td>Also keep the display awake (works on start <em>and</em> reset).</td></tr>
+        <tr><td><code>-l</code>, <code>--lid</code></td><td>Also stay awake when the laptop lid is closed.</td></tr>
         <tr><td><code>-h</code>, <code>--help</code></td><td>Show help.</td></tr>
         <tr><td><code>-v</code>, <code>--version</code></td><td>Show version and the active backend.</td></tr>
       </tbody>
@@ -258,8 +264,8 @@
     <table style="margin-top:8px;">
       <thead><tr><th>Platform</th><th>Backend</th><th>What it prevents</th></tr></thead>
       <tbody>
-        <tr><td>macOS</td><td><code>IOKit IOPMAssertion</code></td><td>System idle sleep (+ display sleep with <code>-d</code>).</td></tr>
-        <tr><td>Linux</td><td><code>logind Inhibit</code> lock</td><td>Idle + sleep (+ lid switch with <code>-d</code>).</td></tr>
+        <tr><td>macOS</td><td><code>IOKit IOPMAssertion</code> <span style="color:var(--muted)">(+ <code>pmset</code> for lid mode)</span></td><td>Idle sleep (+ display with <code>-d</code>, + lid-close with <code>-l</code>).</td></tr>
+        <tr><td>Linux</td><td><code>logind Inhibit</code> lock</td><td>Idle + sleep (+ lid-close with <code>-l</code>).</td></tr>
       </tbody>
     </table>
   </div>

@@ -22,8 +22,10 @@ static int create_assertion(CFStringRef type, const char *reason, IOPMAssertionI
 	return rc == kIOReturnSuccess ? 0 : -1;
 }
 
-platform_inhibitor *platform_inhibit_start(int display, char *errbuf, size_t errlen)
+platform_inhibitor *platform_inhibit_start(int display, int lid, char *errbuf, size_t errlen)
 {
+	(void)lid; /* lid-close on macOS is handled by the lid guard (pmset), not IOKit */
+
 	struct platform_inhibitor *h = calloc(1, sizeof(*h));
 	if (h == NULL) {
 		if (errlen) snprintf(errbuf, errlen, "out of memory");
