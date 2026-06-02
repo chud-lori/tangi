@@ -15,11 +15,26 @@ keeps the **display on** (no screensaver, no lock), and keeps you showing as
 - **Real OS integration:** tangi asks the operating system directly to stay
   awake — macOS IOKit power assertions and Linux systemd-logind inhibitor locks.
 
-## Build
+## Install
+
+The installer builds tangi and puts it on your `PATH` so you can run `tangi`
+from anywhere:
 
 ```sh
-make            # builds ./tangi
-sudo make install   # installs to /usr/local/bin (override with PREFIX=)
+./install.sh            # build + install to /usr/local/bin (asks for sudo if needed)
+./install.sh --user     # install to ~/.local/bin (no sudo)
+./install.sh --prefix ~/opt   # install to ~/opt/bin
+./install.sh --uninstall      # stop any session and remove tangi
+```
+
+If the chosen directory isn't on your `PATH` yet, the installer tells you the
+exact line to add to your shell profile.
+
+Or build/install manually with make:
+
+```sh
+make                 # builds ./tangi
+sudo make install    # installs to /usr/local/bin (override with PREFIX=)
 ```
 
 Requirements:

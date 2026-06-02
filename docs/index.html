@@ -211,8 +211,13 @@
       </div>
 <pre><span class="p">$</span> git clone https://github.com/your-org/tangi
 <span class="p">$</span> cd tangi
-<span class="p">$</span> make                 <span class="c"># builds ./tangi (size-optimized, stripped)</span>
-<span class="p">$</span> sudo make install    <span class="c"># installs to /usr/local/bin</span></pre>
+<span class="p">$</span> ./install.sh         <span class="c"># build + install onto your PATH</span>
+<span class="o">✅ Done. Run it from anywhere:</span>
+<span class="o">     tangi 1h</span>
+
+<span class="c"># no-sudo option, or remove it again:</span>
+<span class="p">$</span> ./install.sh --user
+<span class="p">$</span> ./install.sh --uninstall</pre>
     </div>
     <p style="color:var(--muted); font-size:14.5px;">
       <b style="color:var(--fg)">macOS:</b> clang + the system SDK (IOKit / CoreFoundation). Nothing else.<br>
