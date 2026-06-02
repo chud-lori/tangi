@@ -50,7 +50,7 @@ tangi <duration>      # start (or reset) — stay awake for the given time
 tangi on              # stay awake indefinitely, until stopped
 tangi add <duration>  # add more time to the current session
 tangi lid <duration>  # stay awake even with the lid closed
-tangi status          # show remaining time (also the default with no args)
+tangi status          # show remaining time + end clock time (default, no args)
 tangi stop            # release and allow sleep again
 ```
 
@@ -70,7 +70,7 @@ A bare number means seconds (`90` == `90s`).
 ```sh
 tangi 1h30m       # awake + screen on + online for 90 minutes
 tangi on          # ...indefinitely, until you stop it
-tangi             # ● tangi awake · 1h 28m remaining (shown in color)
+tangi             # ● tangi awake · 1h 28m remaining · ends 16:12 (in color)
 tangi add 10m     # extend by 10 minutes
 tangi lid 1h      # keep working for an hour with the lid closed
 tangi -s 2h       # background: just don't sleep for 2 hours

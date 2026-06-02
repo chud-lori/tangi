@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -303,7 +304,23 @@ static void print_status_line(const char *line)
 		duration_format(rem, rbuf, sizeof(rbuf));
 		printf(" %s\xC2\xB7%s ", c(A_DIM), c(A_RESET));
 		print_duration_colored(rbuf);
-		printf(" %sremaining%s\n", c(A_DIM), c(A_RESET));
+		printf(" %sremaining%s", c(A_DIM), c(A_RESET));
+
+		/* Wall-clock time the session will end (now + remaining). */
+		time_t now = time(NULL);
+		time_t end = now + rem;
+		struct tm tm_end, tm_now;
+		if (localtime_r(&end, &tm_end) != NULL && localtime_r(&now, &tm_now) != NULL) {
+			/* Include the weekday only if it ends on a different day. */
+			const char *fmt = (tm_end.tm_yday == tm_now.tm_yday &&
+			                   tm_end.tm_year == tm_now.tm_year)
+			                  ? "%H:%M" : "%a %H:%M";
+			char tbuf[32];
+			strftime(tbuf, sizeof(tbuf), fmt, &tm_end);
+			printf(" %s\xC2\xB7 ends%s %s%s%s",
+			       c(A_DIM), c(A_RESET), c(A_CYAN), tbuf, c(A_RESET));
+		}
+		printf("\n");
 	}
 
 	/* Line 2: dim detail — elapsed + active modes. */
