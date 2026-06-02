@@ -74,17 +74,17 @@ void duration_format(long secs, char *buf, size_t n)
 	long m = secs / 60;    secs %= 60;
 	long s = secs;
 
-	char tmp[64];
-	size_t off = 0;
-	tmp[0] = '\0';
-
+	/*
+	 * Show the largest unit and the next one only when it's non-zero, so it
+	 * stays readable: at most two units, spaced, with noisy trailing zeros
+	 * dropped. e.g. 8h42m49s -> "8h 42m", 2h -> "2h", 5m30s -> "5m 30s".
+	 */
 	if (d > 0)
-		off += (size_t)snprintf(tmp + off, sizeof(tmp) - off, "%ldd", d);
-	if (h > 0 || d > 0)
-		off += (size_t)snprintf(tmp + off, sizeof(tmp) - off, "%ldh", h);
-	if (m > 0 || h > 0 || d > 0)
-		off += (size_t)snprintf(tmp + off, sizeof(tmp) - off, "%ldm", m);
-	snprintf(tmp + off, sizeof(tmp) - off, "%lds", s);
-
-	snprintf(buf, n, "%s", tmp);
+		h > 0 ? snprintf(buf, n, "%ldd %ldh", d, h) : snprintf(buf, n, "%ldd", d);
+	else if (h > 0)
+		m > 0 ? snprintf(buf, n, "%ldh %ldm", h, m) : snprintf(buf, n, "%ldh", h);
+	else if (m > 0)
+		s > 0 ? snprintf(buf, n, "%ldm %lds", m, s) : snprintf(buf, n, "%ldm", m);
+	else
+		snprintf(buf, n, "%lds", s);
 }

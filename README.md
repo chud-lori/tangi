@@ -70,7 +70,7 @@ A bare number means seconds (`90` == `90s`).
 ```sh
 tangi 1h30m       # awake + screen on + online for 90 minutes
 tangi on          # ...indefinitely, until you stop it
-tangi             # ☕ tangi awake — 1h28m12s remaining
+tangi             # ● tangi awake · 1h 28m remaining (shown in color)
 tangi add 10m     # extend by 10 minutes
 tangi lid 1h      # keep working for an hour with the lid closed
 tangi -s 2h       # background: just don't sleep for 2 hours

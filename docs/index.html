@@ -131,7 +131,7 @@
     <h1>tangi</h1>
     <p class="tagline">A tiny, fast keep-awake tool for macOS &amp; Linux. Keeps your computer awake, your screen on, and you showing as active in Slack — for exactly as long as you want, with a live countdown you can check, extend, and stop from any terminal.</p>
     <div class="badges">
-      <span class="badge"><b>~36 KB</b> binary</span>
+      <span class="badge"><b>~40 KB</b> binary</span>
       <span class="badge">written in <b>C</b></span>
       <span class="badge"><b>0</b> runtime deps</span>
       <span class="badge">macOS · Linux</span>
@@ -151,22 +151,22 @@
       <span class="term-title">zsh — tangi</span>
     </div>
 <pre><span class="p">$</span> tangi 1h30m          <span class="c"># awake + screen on + online, 90 minutes</span>
-<span class="o">☕ tangi awake — 1h30m0s remaining</span>
+<span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 30m remaining</span>
 <span class="o">   elapsed 0s · display on · staying online</span>
 
 <span class="p">$</span> tangi                <span class="c"># no args = live status</span>
-<span class="o">☕ tangi awake — 1h28m12s remaining</span>
-<span class="o">   elapsed 1m48s · display on · staying online</span>
+<span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 28m remaining</span>
+<span class="o">   elapsed 1m 48s · display on · staying online</span>
 
 <span class="p">$</span> tangi add 10m        <span class="c"># add more time to the session</span>
-<span class="o">☕ tangi awake — 1h38m12s remaining</span>
+<span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 38m remaining</span>
 
 <span class="p">$</span> tangi lid 1h         <span class="c"># keep working with the lid closed (macOS asks for admin)</span>
-<span class="o">☕ tangi awake — 1h0m0s remaining</span>
+<span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h remaining</span>
 <span class="o">   elapsed 0s · display on · staying online · lid-close sleep off</span>
 
 <span class="p">$</span> tangi -s 2h          <span class="c"># quiet background mode: just don't sleep</span>
-<span class="o">☕ tangi awake — 2h0m0s remaining</span>
+<span class="o"><span style="color:#6ad28a">●</span> tangi awake · 2h remaining</span>
 <span class="o">   elapsed 0s</span>
 
 <span class="p">$</span> tangi stop           <span class="c"># release — allow sleep again</span>

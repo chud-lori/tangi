@@ -25,6 +25,56 @@
 #define TANGI_VERSION "0.1.0"
 #endif
 
+/* ANSI styling, enabled only on a color-capable TTY (respects NO_COLOR). */
+static int g_color = 0;
+#define A_RESET  "\033[0m"
+#define A_BOLD   "\033[1m"
+#define A_DIM    "\033[2m"
+#define A_GREEN  "\033[32m"
+#define A_BGREEN "\033[92m"
+#define A_CYAN   "\033[36m"
+#define A_RED    "\033[31m"
+
+/* Return an escape code, or "" when color is off, so it's a no-op. */
+static const char *c(const char *code) { return g_color ? code : ""; }
+
+static void color_init(void)
+{
+	g_color = isatty(STDOUT_FILENO);
+	if (getenv("NO_COLOR") != NULL)
+		g_color = 0;
+	const char *term = getenv("TERM");
+	if (term != NULL && strcmp(term, "dumb") == 0)
+		g_color = 0;
+}
+
+/* Print a duration with bright numbers and dim unit letters (e.g. 8h 42m). */
+static void print_duration_colored(const char *s)
+{
+	if (!g_color) {
+		fputs(s, stdout);
+		return;
+	}
+	int in_num = -1; /* -1 = unset, 0 = unit/space, 1 = digit */
+	for (const char *p = s; *p != '\0'; p++) {
+		int isnum = (*p >= '0' && *p <= '9');
+		if (isnum != in_num) {
+			fputs(isnum ? A_BOLD A_CYAN : A_DIM, stdout);
+			in_num = isnum;
+		}
+		putchar(*p);
+	}
+	fputs(A_RESET, stdout);
+}
+
+/* "tangi <state>" with a leading status dot, used for off/stopped lines. */
+static void print_off_line(const char *state)
+{
+	if (g_color)
+		printf("%s\xE2\x97\x8B%s ", A_DIM, A_RESET); /* dim ○ */
+	printf("%stangi%s %s%s%s\n", c(A_BOLD), c(A_RESET), c(A_DIM), state, c(A_RESET));
+}
+
 /*
  * Lid mode (macOS).
  *
@@ -241,25 +291,30 @@ static void print_status_line(const char *line)
 	char ebuf[32];
 	duration_format(el, ebuf, sizeof(ebuf));
 
-	/* Build the trailing detail tag. */
-	char tag[120];
-	tag[0] = '\0';
-	if (disp)
-		strncat(tag, " \xC2\xB7 display on", sizeof(tag) - strlen(tag) - 1);
-	if (active)
-		strncat(tag, " \xC2\xB7 staying online", sizeof(tag) - strlen(tag) - 1);
-	if (lid)
-		strncat(tag, " \xC2\xB7 lid-close sleep off", sizeof(tag) - strlen(tag) - 1);
-
+	/* Line 1: ● tangi awake · <time> remaining */
+	if (g_color)
+		printf("%s\xE2\x97\x8F%s ", A_BGREEN, A_RESET); /* green ● */
+	printf("%stangi%s %sawake%s", c(A_BOLD), c(A_RESET), c(A_GREEN), c(A_RESET));
 	if (indef) {
-		printf("\xE2\x98\x95 tangi awake \xE2\x80\x94 indefinite\n");
-		printf("   elapsed %s%s\n", ebuf, tag);
+		printf(" %s\xC2\xB7%s %sindefinite%s\n",
+		       c(A_DIM), c(A_RESET), c(A_BOLD), c(A_RESET));
 	} else {
 		char rbuf[32];
 		duration_format(rem, rbuf, sizeof(rbuf));
-		printf("\xE2\x98\x95 tangi awake \xE2\x80\x94 %s remaining\n", rbuf);
-		printf("   elapsed %s%s\n", ebuf, tag);
+		printf(" %s\xC2\xB7%s ", c(A_DIM), c(A_RESET));
+		print_duration_colored(rbuf);
+		printf(" %sremaining%s\n", c(A_DIM), c(A_RESET));
 	}
+
+	/* Line 2: dim detail — elapsed + active modes. */
+	printf("  %selapsed %s", c(A_DIM), ebuf);
+	if (disp)
+		printf(" \xC2\xB7 display on");
+	if (active)
+		printf(" \xC2\xB7 staying online");
+	if (lid)
+		printf(" \xC2\xB7 lid-close sleep off");
+	printf("%s\n", c(A_RESET));
 }
 
 /* Send one command to a running daemon and print the status it returns. */
@@ -267,10 +322,7 @@ static int talk_and_print(const char *cmd, int require_running)
 {
 	int fd = ipc_connect();
 	if (fd < 0) {
-		if (require_running)
-			fprintf(stderr, "tangi: not running\n");
-		else
-			printf("tangi: not running\n");
+		print_off_line("not running");
 		return require_running ? 1 : 0;
 	}
 
@@ -312,14 +364,17 @@ static int cmd_stop(void)
 {
 	int fd = ipc_connect();
 	if (fd < 0) {
-		printf("tangi: not running\n");
+		print_off_line("not running");
 		return 0;
 	}
 	ipc_send_line(fd, "STOP");
 	char reply[64];
 	ipc_recv_line(fd, reply, sizeof(reply));
 	close(fd);
-	printf("tangi: stopped, sleep allowed\n");
+	if (g_color)
+		printf("%s\xE2\x97\x8B%s ", A_DIM, A_RESET); /* dim ○ */
+	printf("%stangi%s stopped %s\xC2\xB7 sleep allowed%s\n",
+	       c(A_BOLD), c(A_RESET), c(A_DIM), c(A_RESET));
 	return 0;
 }
 
@@ -459,6 +514,8 @@ int main(int argc, char **argv)
 	if (argc == 4 && strcmp(argv[1], "__lidguard") == 0)
 		return lidguard_main(argv[2], argv[3]);
 #endif
+
+	color_init();
 
 	/* Default is Amphetamine-style: display on + stay online. */
 	int display = 1;
