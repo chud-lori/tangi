@@ -116,3 +116,7 @@ so the machine can sleep normally again. Nothing is left running.
 | Linux    | logind `Inhibit` lock | system, idle/presence | `handle-lid-switch` for lid mode (`-l`) |
 
 (`-s` drops back to system-sleep only.)
+
+## License
+
+MIT — see [LICENSE](LICENSE).

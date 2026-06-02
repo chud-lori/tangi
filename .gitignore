@@ -1,2 +1,6 @@
+# build artifacts
 tangi
 *.o
+
+# macOS
+.DS_Store
