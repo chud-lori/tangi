@@ -152,22 +152,22 @@
     </div>
 <pre><span class="p">$</span> tangi 1h30m          <span class="c"># awake + screen on + online, 90 minutes</span>
 <span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 30m remaining · ends 16:12</span>
-<span class="o">   elapsed 0s · display on · staying online</span>
+<span class="o">   session 0s · display on · staying online</span>
 
 <span class="p">$</span> tangi                <span class="c"># no args = live status</span>
 <span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 28m remaining · ends 16:12</span>
-<span class="o">   elapsed 1m 48s · display on · staying online</span>
+<span class="o">   session 1m 48s · display on · staying online</span>
 
 <span class="p">$</span> tangi add 10m        <span class="c"># add more time to the session</span>
 <span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h 38m remaining · ends 16:22</span>
 
 <span class="p">$</span> tangi lid 1h         <span class="c"># keep working with the lid closed (macOS asks for admin)</span>
 <span class="o"><span style="color:#6ad28a">●</span> tangi awake · 1h remaining · ends 15:46</span>
-<span class="o">   elapsed 0s · display on · staying online · lid-close sleep off</span>
+<span class="o">   session 0s · display on · staying online · lid-close sleep off</span>
 
 <span class="p">$</span> tangi -s 2h          <span class="c"># quiet background mode: just don't sleep</span>
 <span class="o"><span style="color:#6ad28a">●</span> tangi awake · 2h remaining · ends 16:46</span>
-<span class="o">   elapsed 0s</span>
+<span class="o">   session 0s</span>
 
 <span class="p">$</span> tangi stop           <span class="c"># release — allow sleep again</span>
 <span class="o">tangi: stopped, sleep allowed</span></pre>

@@ -323,8 +323,8 @@ static void print_status_line(const char *line)
 		printf("\n");
 	}
 
-	/* Line 2: dim detail — elapsed + active modes. */
-	printf("  %selapsed %s", c(A_DIM), ebuf);
+	/* Line 2: dim detail — session age + active modes. */
+	printf("  %ssession %s", c(A_DIM), ebuf);
 	if (disp)
 		printf(" \xC2\xB7 display on");
 	if (active)
