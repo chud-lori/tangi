@@ -330,7 +330,7 @@ static void print_status_line(const char *line)
 	if (active)
 		printf(" \xC2\xB7 staying online");
 	if (lid)
-		printf(" \xC2\xB7 lid-close sleep off");
+		printf(" \xC2\xB7 stays awake lid-closed");
 	printf("%s\n", c(A_RESET));
 }
 
