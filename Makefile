@@ -21,6 +21,12 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   SRC     += src/platform_mac.c
   LDFLAGS += -framework IOKit -framework CoreFoundation -framework CoreGraphics
+  # ARCH=x86_64 (or arm64) cross-compiles from an Apple-silicon runner, so CI
+  # never needs the slow, scarce Intel macOS runner pool. Empty = host arch.
+  ifneq ($(ARCH),)
+    CFLAGS  += -arch $(ARCH)
+    LDFLAGS += -arch $(ARCH)
+  endif
 else
   SRC     += src/platform_linux.c
   # Use libsystemd (sd-bus) when available for a clean fd-based inhibitor;
