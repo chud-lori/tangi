@@ -1,0 +1,83 @@
+name: release
+
+# Tag a version to cut a release:
+#   git tag v0.1.0 && git push origin v0.1.0
+# Builds a stripped binary per platform and attaches them to the GitHub
+# Release, so the curl installer can pull prebuilt binaries.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to build (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.asset }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14,         asset: tangi-macos-arm64 }
+          - { os: macos-13,         asset: tangi-macos-x86_64 }
+          - { os: ubuntu-24.04,     asset: tangi-linux-x86_64 }
+          - { os: ubuntu-24.04-arm, asset: tangi-linux-arm64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      # Release binaries are built WITHOUT libsystemd so they carry no shared
+      # dependency beyond libc — tangi falls back to spawning `systemd-inhibit`
+      # at runtime on Linux, keeping the download portable across distros.
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: make VERSION=${{ steps.ver.outputs.version }}
+
+      - name: Stage asset
+        run: |
+          mkdir -p dist
+          cp tangi "dist/${{ matrix.asset }}"
+
+      - name: Checksum
+        shell: bash
+        run: |
+          cd dist
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
+          else
+            sha256sum "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/*
+
+  release:
+    name: publish release
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: dist/*
+          generate_release_notes: true

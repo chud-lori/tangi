@@ -17,8 +17,28 @@ keeps the **display on** (no screensaver, no lock), and keeps you showing as
 
 ## Install
 
-The installer builds tangi and puts it on your `PATH` so you can run `tangi`
-from anywhere:
+One line — downloads a prebuilt binary for your platform, no clone or compiler
+needed:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh
+```
+
+Prebuilt binaries are published for macOS (arm64 / x86_64) and Linux (x86_64 /
+arm64) on every [release](https://github.com/chud-lori/tangi/releases). The same
+script handles the rest:
+
+```sh
+# no-sudo install into ~/.local/bin:
+curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --user
+
+# pin a specific version, or uninstall:
+curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --uninstall
+```
+
+Or clone and run the installer, which **builds from source** when a checkout is
+present and puts `tangi` on your `PATH`:
 
 ```sh
 ./install.sh            # build + install to /usr/local/bin (asks for sudo if needed)

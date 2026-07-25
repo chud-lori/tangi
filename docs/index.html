@@ -138,7 +138,7 @@
     </div>
     <div class="cta">
       <a class="btn primary" href="#install">Install</a>
-      <a class="btn ghost" href="https://github.com/your-org/tangi">View on GitHub →</a>
+      <a class="btn ghost" href="https://github.com/chud-lori/tangi">View on GitHub →</a>
     </div>
   </div>
 </header>
@@ -203,21 +203,39 @@
 <section id="install">
   <div class="wrap">
     <h2>Install</h2>
-    <p class="sub">A C compiler and <code class="inline">make</code> are all you need.</p>
+    <p class="sub">One line — grabs a prebuilt binary for your platform. No clone, no compiler.</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">install</span>
+      </div>
+<pre><span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh
+<span class="o">Downloading tangi-macos-arm64...</span>
+<span class="o">Installing to /usr/local/bin...</span>
+<span class="o">✅ Done. Run it from anywhere:</span>
+<span class="o">     tangi 1h</span>
+
+<span class="c"># no-sudo (~/.local/bin), pin a version, or remove it:</span>
+<span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --user
+<span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --version v0.1.0
+<span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/chud-lori/tangi/main/install.sh | sh -s -- --uninstall</pre>
+    </div>
+    <p style="color:var(--muted); font-size:14.5px;">
+      Prebuilt for macOS (arm64 / x86_64) and Linux (x86_64 / arm64) on every
+      <a href="https://github.com/chud-lori/tangi/releases" style="color:var(--fg)">release</a>.
+    </p>
+
+    <h3 style="margin:28px 0 4px; font-size:16.5px;">Or build from source</h3>
     <div class="term">
       <div class="term-bar">
         <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
         <span class="term-title">build</span>
       </div>
-<pre><span class="p">$</span> git clone https://github.com/your-org/tangi
+<pre><span class="p">$</span> git clone https://github.com/chud-lori/tangi
 <span class="p">$</span> cd tangi
-<span class="p">$</span> ./install.sh         <span class="c"># build + install onto your PATH</span>
+<span class="p">$</span> ./install.sh         <span class="c"># builds + installs onto your PATH</span>
 <span class="o">✅ Done. Run it from anywhere:</span>
-<span class="o">     tangi 1h</span>
-
-<span class="c"># no-sudo option, or remove it again:</span>
-<span class="p">$</span> ./install.sh --user
-<span class="p">$</span> ./install.sh --uninstall</pre>
+<span class="o">     tangi 1h</span></pre>
     </div>
     <p style="color:var(--muted); font-size:14.5px;">
       <b style="color:var(--fg)">macOS:</b> clang + the system SDK (IOKit / CoreFoundation). Nothing else.<br>
@@ -279,7 +297,7 @@
 <footer>
   <div class="logo-sm">☕</div>
   <p>tangi — stay awake, on your terms.<br>
-  <a href="https://github.com/your-org/tangi">GitHub</a> · MIT License</p>
+  <a href="https://github.com/chud-lori/tangi">GitHub</a> · MIT License</p>
 </footer>
 
 </body>

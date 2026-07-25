@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14,     name: macos-arm64 }
+          - { os: macos-13,     name: macos-x86_64 }
+          - { os: ubuntu-24.04, name: linux-x86_64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install libsystemd (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsystemd-dev pkg-config
+
+      - name: Build
+        run: make
+
+      - name: Smoke test
+        run: |
+          ./tangi --version
+          ./tangi --help
